@@ -1,0 +1,10 @@
+# Python dependencies
+fastapi==0.129.2
+uvicorn==0.41.0
+sqlalchemy==2.0.46
+pydantic==2.12.5
+python-jose==3.5.0
+passlib==1.7.4
+bcrypt==5.0.0
+ecdsa==0.19.1
+python-multipart==0.0.20
