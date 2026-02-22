@@ -78,7 +78,6 @@ class Blockchain:
             block.hash = block.calculate_hash()
     
     def is_chain_valid(self) -> tuple[bool, List[int]]:
-_chain_valid(self) -> tuple[bool, List[int]]:
         """Validate the entire blockchain."""
         invalid_blocks = []
         

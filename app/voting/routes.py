@@ -1,6 +1,6 @@
 """Voting routes."""
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -42,6 +42,7 @@ def load_blocks_from_db(db: Session = None):
 @router.post("/vote", status_code=status.HTTP_201_CREATED)
 def cast_vote(
     vote_data: VoteCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -109,7 +110,7 @@ def cast_vote(
         user_id=current_user.id,
         action="vote",
         details=f"Voted for candidate: {vote_data.candidate_id}",
-        ip_address=get_client_ip(db)
+        ip_address=get_client_ip(request)
     )
     db.add(log)
     

@@ -74,9 +74,6 @@ class Block(Base):
     nonce = Column(Integer, default=0)
     hash = Column(String(64), unique=True, index=True, nullable=False)
     validator = Column(String(50), default="system")
-    
-    # Relationships
-    transactions = relationship("Vote", back_populates="block")
 
 
 class IPBlacklist(Base):
