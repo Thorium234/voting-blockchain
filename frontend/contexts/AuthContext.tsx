@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(response.data);
     } catch (error) {
       // Token expired, try to refresh
+      const storedRefreshToken = localStorage.getItem('refresh_token');
       if (storedRefreshToken) {
         await refreshAccessToken();
       } else {

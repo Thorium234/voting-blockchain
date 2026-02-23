@@ -14,22 +14,21 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // Redirect to login if not authenticated
-    }
-  }, [isLoading, isAuthenticated]);
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
 
   if (!mounted || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-900">
       {/* Header */}
       <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,25 +43,25 @@ export default function Home() {
             </div>
             
             <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/" className="text-slate-300 hover:text-emerald-400 transition">Home</Link>
-              <Link href="/results" className="text-slate-300 hover:text-emerald-400 transition">Results</Link>
+              <Link href="/" className="text-slate-300 hover:text-emerald-400 transition-colors">Home</Link>
+              <Link href="/results" className="text-slate-300 hover:text-emerald-400 transition-colors">Results</Link>
               {isAuthenticated ? (
                 <>
-                  <Link href="/dashboard" className="text-slate-300 hover:text-emerald-400 transition">Dashboard</Link>
+                  <Link href="/dashboard" className="text-slate-300 hover:text-emerald-400 transition-colors">Dashboard</Link>
                   {user?.is_admin && (
-                    <Link href="/admin" className="text-slate-300 hover:text-emerald-400 transition">Admin</Link>
+                    <Link href="/admin" className="text-slate-300 hover:text-emerald-400 transition-colors">Admin</Link>
                   )}
                   <button 
-                    onClick={() => { logout(); router.push('/'); }}
-                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+                    onClick={handleLogout}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
                   >
                     Logout
                   </button>
                 </>
               ) : (
                 <>
-                  <Link href="/login" className="text-slate-300 hover:text-emerald-400 transition">Login</Link>
-                  <Link href="/register" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition">
+                  <Link href="/login" className="text-slate-300 hover:text-emerald-400 transition-colors">Login</Link>
+                  <Link href="/register" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors">
                     Register
                   </Link>
                 </>
@@ -74,7 +73,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center animate-fadeIn">
+        <div className="text-center animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
             Secure Blockchain
             <span className="block text-emerald-500">Voting System</span>
@@ -88,7 +87,7 @@ export default function Home() {
             {isAuthenticated ? (
               <Link 
                 href="/vote" 
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition transform hover:scale-105"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg shadow-emerald-500/25"
               >
                 Cast Your Vote →
               </Link>
@@ -96,13 +95,13 @@ export default function Home() {
               <>
                 <Link 
                   href="/register" 
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition transform hover:scale-105"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg shadow-emerald-500/25"
                 >
                   Get Started
                 </Link>
                 <Link 
                   href="/results" 
-                  className="bg-slate-700 hover:bg-slate-600 text-white text-lg px-8 py-4 rounded-xl transition"
+                  className="bg-slate-700 hover:bg-slate-600 text-white text-lg px-8 py-4 rounded-xl transition-colors"
                 >
                   View Results
                 </Link>
@@ -147,8 +146,7 @@ export default function Home() {
           ].map((feature, index) => (
             <div 
               key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:border-emerald-500/50 transition animate-fadeIn"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-2xl p-6 hover:border-emerald-500/50 transition-all hover:-translate-y-1"
             >
               <div className="text-4xl mb-4">{feature.icon}</div>
               <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>

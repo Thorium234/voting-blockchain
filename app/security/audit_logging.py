@@ -81,7 +81,10 @@ def create_audit_log(
     # Get current timestamp
     timestamp = datetime.utcnow()
     
-    # Create log entry (ID will be assigned on flush)
+    # Generate temporary hash for NOT NULL constraint (will be updated after flush)
+    temp_hash = hashlib.sha256(f"{timestamp}{action}".encode()).hexdigest()
+    
+    # Create log entry
     log = ActivityLog(
         user_id=user_id,
         action=action,
@@ -90,13 +93,14 @@ def create_audit_log(
         user_agent=user_agent,
         request_id=request_id,
         previous_log_hash=previous_hash,
-        timestamp=timestamp
+        timestamp=timestamp,
+        log_hash=temp_hash  # Temporary hash until we get the ID
     )
     
     db.add(log)
     db.flush()  # Get the ID
     
-    # Compute and set hash
+    # Compute and set final hash
     log.log_hash = compute_log_hash(
         log_id=log.id,
         user_id=user_id,
