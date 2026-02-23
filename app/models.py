@@ -1,4 +1,4 @@
-"""Database models with enhanced security fields."""
+"""Database models with enhanced security fields and role-based access."""
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float, Index
 from sqlalchemy.orm import relationship
@@ -7,15 +7,19 @@ from app.database import Base
 
 
 class User(Base):
-    """User model for voters and admins."""
+    """User model for voters, admins, and superadmins."""
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
-    voter_id = Column(String(50), unique=True, index=True, nullable=False)
+    voter_id = Column(String(50), unique=True, index=True, nullable=True)  # Optional for admins
     password_hash = Column(String(255), nullable=False)
     public_key = Column(Text, nullable=True)  # For ECDSA signatures
     has_voted = Column(Boolean, default=False)
+    
+    # Role-based access control
+    # Roles: 'voter' - can vote, 'admin' - manage users/votes, 'superadmin' - full system control
+    role = Column(String(20), default='voter', nullable=False)  # voter, admin, superadmin
     
     # Security fields
     device_fingerprint = Column(String(255), nullable=True)
@@ -26,7 +30,6 @@ class User(Base):
     last_login_ip = Column(String(45), nullable=True)
     
     # Status
-    is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     
@@ -42,7 +45,33 @@ class User(Base):
     __table_args__ = (
         Index('idx_user_email_active', 'email', 'is_active'),
         Index('idx_user_voter_id', 'voter_id'),
+        Index('idx_user_role', 'role'),
     )
+    
+    @property
+    def is_admin(self) -> bool:
+        """Check if user is an admin (admin or superadmin)."""
+        return self.role in ('admin', 'superadmin')
+    
+    @property
+    def is_superadmin(self) -> bool:
+        """Check if user is a superadmin."""
+        return self.role == 'superadmin'
+    
+    @property
+    def can_vote(self) -> bool:
+        """Check if user can vote (voters only)."""
+        return self.role == 'voter' and self.is_active
+    
+    @property
+    def can_manage_users(self) -> bool:
+        """Check if user can manage other users."""
+        return self.role in ('admin', 'superadmin')
+    
+    @property
+    def can_manage_admins(self) -> bool:
+        """Check if user can manage other admins."""
+        return self.role == 'superadmin'
 
 
 class Session(Base):
@@ -56,11 +85,11 @@ class Session(Base):
     # Zero-trust bindings
     device_fingerprint = Column(String(255), nullable=True)
     ip_address = Column(String(45), nullable=False)
-    ip_address_initial = Column(String(45), nullable=False)  # Original IP at login
+    ip_address_initial = Column(String(45), nullable=False)
     user_agent = Column(String(500), nullable=True)
     
     # Token binding
-    token_fingerprint = Column(String(64), nullable=True)  # Hash of token for binding
+    token_fingerprint = Column(String(64), nullable=True)
     
     # Timing
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -93,8 +122,8 @@ class Vote(Base):
     
     # Cryptographic fields
     signature = Column(Text, nullable=True)
-    nonce = Column(String(32), nullable=True)  # Anti-replay nonce
-    vote_payload_hash = Column(String(64), nullable=False)  # Hash before signing
+    nonce = Column(String(32), nullable=True)
+    vote_payload_hash = Column(String(64), nullable=False)
     
     # Verification status
     is_verified = Column(Boolean, default=False)
@@ -111,19 +140,19 @@ class Block(Base):
     id = Column(Integer, primary_key=True, index=True)
     index = Column(Integer, unique=True, index=True, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
-    votes_data = Column(Text, nullable=True)  # JSON serialized votes
+    votes_data = Column(Text, nullable=True)
     previous_hash = Column(String(64), nullable=False)
     nonce = Column(Integer, default=0)
     hash = Column(String(64), unique=True, index=True, nullable=False)
     
     # Enhanced security
-    merkle_root = Column(String(64), nullable=True)  # Merkle root of votes
+    merkle_root = Column(String(64), nullable=True)
     validator = Column(String(50), default="system")
-    signature = Column(Text, nullable=True)  # Block signature (optional)
+    signature = Column(Text, nullable=True)
     
     # Checkpoint
     is_checkpoint = Column(Boolean, default=False)
-    checkpoint_hash = Column(String(64), nullable=True)  # Hash for chain verification
+    checkpoint_hash = Column(String(64), nullable=True)
 
 
 class IPBlacklist(Base):
@@ -137,7 +166,7 @@ class IPBlacklist(Base):
     failed_attempts = Column(Integer, default=0)
     
     # Granular control
-    ban_type = Column(String(20), default="temp")  # temp, permanent, subnet, asn
+    ban_type = Column(String(20), default="temp")
     parent_ban_id = Column(Integer, ForeignKey("ip_blacklist.id"), nullable=True)
     
     # Admin info
@@ -156,8 +185,8 @@ class LoginAttempt(Base):
     success = Column(Boolean, default=False)
     
     # Detailed tracking
-    attempt_type = Column(String(20), default="login")  # login, register, refresh, vote
-    details = Column(Text, nullable=True)  # Additional context
+    attempt_type = Column(String(20), default="login")
+    details = Column(Text, nullable=True)
     user_agent = Column(String(500), nullable=True)
     
     # Security signals
@@ -183,13 +212,13 @@ class ActivityLog(Base):
     details = Column(Text, nullable=True)
     ip_address = Column(String(45), nullable=True)
     
-    # Hash chaining for tamper evidence
+    # Hash chaining
     previous_log_hash = Column(String(64), nullable=True)
     log_hash = Column(String(64), nullable=False, unique=True)
     
     # Context
     user_agent = Column(String(500), nullable=True)
-    request_id = Column(String(36), nullable=True)  # Trace ID
+    request_id = Column(String(36), nullable=True)
     
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     
@@ -207,7 +236,7 @@ class VoteNonce(Base):
     id = Column(Integer, primary_key=True, index=True)
     voter_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     nonce = Column(String(32), unique=True, nullable=False)
-    vote_hash = Column(String(64), nullable=False)  # Hash of vote to prevent replay
+    vote_hash = Column(String(64), nullable=False)
     used_at = Column(DateTime, default=datetime.utcnow)
     ip_address = Column(String(45), nullable=True)
     
@@ -225,10 +254,28 @@ class ChainCheckpoint(Base):
     block_index = Column(Integer, unique=True, nullable=False)
     block_hash = Column(String(64), nullable=False)
     total_votes = Column(Integer, default=0)
-    checkpoint_hash = Column(String(64), nullable=False)  # Signed checkpoint
+    checkpoint_hash = Column(String(64), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     # Index
     __table_args__ = (
         Index('idx_checkpoint_block', 'block_index'),
+    )
+
+
+class Candidate(Base):
+    """Candidates for voting."""
+    __tablename__ = "candidates"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    candidate_id = Column(String(50), unique=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    description = Column(Text, nullable=True)
+    image_url = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Index
+    __table_args__ = (
+        Index('idx_candidate_active', 'candidate_id', 'is_active'),
     )

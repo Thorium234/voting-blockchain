@@ -50,7 +50,8 @@ class UserResponse(BaseModel):
     """User response schema."""
     id: int
     email: str
-    voter_id: str
+    voter_id: Optional[str] = None
+    role: str = 'voter'  # voter, admin, superadmin
     has_voted: bool
     is_admin: bool
     is_active: bool

@@ -12,7 +12,7 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8000"))
     
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./voting.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:////home/thorium/Desktop/programming/blockchain/voting.db")
     
     # JWT - Enterprise Security
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-change-in-production")
