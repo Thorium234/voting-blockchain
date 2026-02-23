@@ -116,7 +116,7 @@ def decode_token(
     """
     try:
         # Decode without verification first to check token type
-        unverified = jwt.decode(token, options={"verify_signature": False})
+        unverified = jwt.decode(token, key=None, options={"verify_signature": False}, key=None)
         
         if unverified.get("type") != "access":
             # Allow refresh tokens but don't bind them as tightly
@@ -199,7 +199,7 @@ def verify_token_bindings(
 def get_token_claims(token: str) -> Optional[dict]:
     """Get all claims from a token without verification."""
     try:
-        return jwt.decode(token, options={"verify_signature": False})
+        return jwt.decode(token, key=None, options={"verify_signature": False}, key=None)
     except JWTError:
         return None
 
