@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to create admin user
-# Usage: ./create_admin.sh [email] [password] [voter_id]
+# Usage: ./create_admin.sh [email] [password] [voter_id] [role]
 
 # Colors
 GREEN='\033[0;32m'
@@ -11,23 +11,24 @@ NC='\033[0m'
 # Get arguments or use defaults
 EMAIL="${1:-admin@example.com}"
 PASSWORD="${2:-injendi27@}"
-VOTER_ID="${3:-admin}"
+VOTER_ID="${3:-}"
+ROLE="${4:-voter}"
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # Activate virtual environment
-if [ -d "venv" ]; then
-    source venv/bin/activate
+if [ -f "$SCRIPT_DIR/venv/bin/activate" ]; then
+    source "$SCRIPT_DIR/venv/bin/activate"
 else
     echo -e "${RED}Virtual environment not found. Run ./start.sh first.${NC}"
     exit 1
 fi
 
-echo "Creating admin user..."
+echo "Creating user..."
 echo "Email: $EMAIL"
-echo "Voter ID: $VOTER_ID"
+echo "Role: $ROLE"
 
 # Run Python script to create admin
 python3 << EOF
@@ -48,32 +49,31 @@ existing = db.query(User).filter(User.email == "$EMAIL").first()
 
 if existing:
     print(f"User {existing.email} already exists")
-    existing.is_admin = True
+    existing.role = "$ROLE"
     existing.is_active = True
     existing.password_hash = hash_password("$PASSWORD")
-    print("Updated existing user to admin")
+    print(f"Updated user to role: $ROLE")
 else:
-    # Create new admin
-    admin = User(
+    # Create new user
+    user = User(
         email="$EMAIL",
-        voter_id="$VOTER_ID",
+        voter_id="$VOTER_ID" if "$VOTER_ID" else None,
         password_hash=hash_password("$PASSWORD"),
-        is_admin=True,
+        role="$ROLE",
         is_active=True,
         is_verified=True
     )
-    db.add(admin)
-    print(f"Created new admin user: $EMAIL")
+    db.add(user)
+    print(f"Created new user: $EMAIL with role: $ROLE")
 
 db.commit()
 
 # Verify
-admin = db.query(User).filter(User.email == "$EMAIL").first()
-print(f"\n✓ Admin user created/updated successfully!")
-print(f"  Email: {admin.email}")
-print(f"  Voter ID: {admin.voter_id}")
-print(f"  Is Admin: {admin.is_admin}")
-print(f"  Is Active: {admin.is_active}")
+user = db.query(User).filter(User.email == "$EMAIL").first()
+print(f"\n✓ User created/updated successfully!")
+print(f"  Email: {user.email}")
+print(f"  Role: {user.role}")
+print(f"  Is Admin: {user.is_admin}")
 EOF
 
 RESULT=$?
@@ -81,7 +81,7 @@ RESULT=$?
 if [ $RESULT -eq 0 ]; then
     echo -e "${GREEN}Done!${NC}"
 else
-    echo -e "${RED}Failed to create admin user${NC}"
+    echo -e "${RED}Failed to create user${NC}"
 fi
 
 deactivate 2>/dev/null
