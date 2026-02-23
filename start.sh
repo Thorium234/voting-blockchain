@@ -67,7 +67,7 @@ start_backend() {
     print_msg "$BLUE" "Starting backend server..."
     kill_port $BACKEND_PORT
     source ./venv/bin/activate
-    nohup uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT > backend.log 2>&1 &
+    nohup /home/thorium/Desktop/programming/blockchain/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port $BACKEND_PORT > backend.log 2>&1 &
     
     local count=0
     while [ $count -lt 15 ]; do
