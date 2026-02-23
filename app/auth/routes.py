@@ -240,8 +240,8 @@ def login(credentials: UserLogin, request: Request, db: Session = Depends(get_db
     )
     db.add(session)
     
-    # Update token version to invalidate old tokens
-    user.token_version += 1
+    # Update token version to invalidate old tokens (handle NULL)
+    user.token_version = (user.token_version or 0) + 1
     
     # Update last login info
     user.last_login_at = datetime.utcnow()
@@ -297,8 +297,8 @@ def logout(request: Request, current_user: User = Depends(get_current_user), db:
         SessionModel.is_active == True
     ).update({"is_active": False})
     
-    # Increment token version
-    current_user.token_version += 1
+    # Increment token version (handle NULL)
+    current_user.token_version = (current_user.token_version or 0) + 1
     
     # Log activity
     create_audit_log(
