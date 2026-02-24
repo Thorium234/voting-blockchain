@@ -116,7 +116,7 @@ def decode_token(
     """
     try:
         # Decode without verification first to check token type
-        unverified = jwt.decode(token, options={"verify_signature": False})
+        unverified = jwt.decode(token, key="", options={"verify_signature": False})
         
         if unverified.get("type") != "access":
             # Allow refresh tokens but don't bind them as tightly

@@ -1,0 +1,188 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.2, pluggy-1.6.0 -- /home/thorium/Desktop/programming/2026/blockchain/venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/thorium/Desktop/programming/2026/blockchain
+plugins: anyio-4.12.1, cov-7.0.0
+collecting ... collected 27 items
+
+tests/test_blockchain.py::TestBlockHash::test_deterministic_hash FAILED  [  3%]
+tests/test_blockchain.py::TestBlockHash::test_hash_changes_with_data PASSED [  7%]
+tests/test_blockchain.py::TestBlockHash::test_canonical_serialization FAILED [ 11%]
+tests/test_blockchain.py::TestMerkleRoot::test_empty_merkle_root PASSED  [ 14%]
+tests/test_blockchain.py::TestMerkleRoot::test_single_vote_merkle FAILED [ 18%]
+tests/test_blockchain.py::TestMerkleRoot::test_multiple_votes_merkle PASSED [ 22%]
+tests/test_blockchain.py::TestBlockchain::test_genesis_block PASSED      [ 25%]
+tests/test_blockchain.py::TestBlockchain::test_add_block PASSED          [ 29%]
+tests/test_blockchain.py::TestBlockchain::test_chain_validation PASSED   [ 33%]
+tests/test_blockchain.py::TestBlockchain::test_tamper_detection PASSED   [ 37%]
+tests/test_blockchain.py::TestVoteTransaction::test_transaction_hash PASSED [ 40%]
+tests/test_blockchain.py::TestVoteTransaction::test_different_votes_different_hashes PASSED [ 44%]
+tests/test_blockchain.py::TestSecurityAntiReplay::test_nonce_generation PASSED [ 48%]
+tests/test_blockchain.py::TestSecurityAntiReplay::test_vote_payload_hash PASSED [ 51%]
+tests/test_blockchain.py::TestSecurityAntiReplay::test_different_payload_different_hash PASSED [ 55%]
+tests/test_security.py::TestSlidingWindowRateLimiter::test_allow_first_requests PASSED [ 59%]
+tests/test_security.py::TestSlidingWindowRateLimiter::test_block_excess_requests PASSED [ 62%]
+tests/test_security.py::TestSlidingWindowRateLimiter::test_different_keys_independent PASSED [ 66%]
+tests/test_security.py::TestTokenBucket::test_initial_tokens PASSED      [ 70%]
+tests/test_security.py::TestTokenBucket::test_refill_tokens PASSED       [ 74%]
+tests/test_security.py::TestTokenBucket::test_no_overflow FAILED         [ 77%]
+tests/test_security.py::TestAntiReplay::test_timestamp_validation PASSED [ 81%]
+tests/test_security.py::TestAntiReplay::test_old_timestamp_rejected PASSED [ 85%]
+tests/test_security.py::TestAntiReplay::test_future_timestamp_rejected FAILED [ 88%]
+tests/test_security.py::TestAntiReplay::test_nonce_generation PASSED     [ 92%]
+tests/test_security.py::TestAntiReplay::test_vote_payload_hash PASSED    [ 96%]
+tests/test_security.py::TestAntiReplay::test_different_payload_different_hash PASSED [100%]
+
+=================================== FAILURES ===================================
+____________________ TestBlockHash.test_deterministic_hash _____________________
+
+self = <test_blockchain.TestBlockHash object at 0x73afbafa48f0>
+
+>   ???
+E   AssertionError: assert '68d1a4cc56bc...255d46a578042' == 'f3654ec66e2b...2b18eee93a261'
+E     
+E     - f3654ec66e2b397110b3197db19c8c7c4cdfe603654580326f72b18eee93a261
+E     + 68d1a4cc56bc0df1f84e4c65cc97a6adbb9fa4405e70ff578a0255d46a578042
+
+/home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:32: AssertionError
+__________________ TestBlockHash.test_canonical_serialization __________________
+
+self = <test_blockchain.TestBlockHash object at 0x73afbacdb230>
+
+>   ???
+E   AssertionError: assert '4c97873b1398...e78e721c51376' == '74d28dce1c00...9b2a4ba7cb676'
+E     
+E     - 74d28dce1c00adb31a641047c3db05967ba54a0ab72ec2035c09b2a4ba7cb676
+E     + 4c97873b13986a5e4bdbe63f515ee757987dc991d039a93c888e78e721c51376
+
+/home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:68: AssertionError
+____________________ TestMerkleRoot.test_single_vote_merkle ____________________
+
+self = <test_blockchain.TestMerkleRoot object at 0x73afbacdb740>
+
+>   ???
+E   AssertionError: assert 'e0a5c44c71fe...6100cc4b3337f' == 'b95d37166e9b...123b84e66d47b'
+E     
+E     - b95d37166e9ba6af6bb66922f856ddedc89568d0c48efd356b2123b84e66d47b
+E     + e0a5c44c71fe3fc1ae6a6096ad1c4bff17a4052c0bc602a6aaa6100cc4b3337f
+
+/home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:97: AssertionError
+_______________________ TestTokenBucket.test_no_overflow _______________________
+
+self = <test_security.TestTokenBucket object at 0x73afba8be8a0>
+
+    def test_no_overflow(self):
+        """Bucket should not overflow."""
+        bucket = TokenBucket(5, 100.0)
+    
+        # Try to add way more than capacity
+        bucket._tokens = 1000
+    
+        # Should cap at capacity
+>       assert bucket._tokens <= 5
+E       assert 1000 <= 5
+E        +  where 1000 = <app.security.rate_limiter.TokenBucket object at 0x73afba8bf680>._tokens
+
+tests/test_security.py:84: AssertionError
+________________ TestAntiReplay.test_future_timestamp_rejected _________________
+
+self = <test_security.TestAntiReplay object at 0x73afba8bf140>
+
+    def test_future_timestamp_rejected(self):
+        """Future timestamps should be rejected."""
+        from app.security.anti_replay import validate_timestamp
+    
+>       future = int(time.time()) + 100
+                     ^^^^
+E       NameError: name 'time' is not defined. Did you forget to import 'time'
+
+tests/test_security.py:117: NameError
+=============================== warnings summary ===============================
+app/database.py:17
+  /home/thorium/Desktop/programming/2026/blockchain/app/database.py:17: MovedIn20Warning: The ``declarative_base()`` function is now available as sqlalchemy.orm.declarative_base(). (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+    Base = declarative_base()
+
+app/security/rate_limiter.py:102
+tests/test_security.py::TestTokenBucket::test_initial_tokens
+tests/test_security.py::TestTokenBucket::test_refill_tokens
+tests/test_security.py::TestTokenBucket::test_no_overflow
+  /home/thorium/Desktop/programming/2026/blockchain/app/security/rate_limiter.py:102: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self._last_refill = datetime.utcnow()
+
+tests/test_blockchain.py::TestBlockHash::test_deterministic_hash
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:24: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestBlockHash::test_hash_changes_with_data
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:38: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestBlockHash::test_hash_changes_with_data
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:45: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestBlockHash::test_canonical_serialization
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:56: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestBlockHash::test_canonical_serialization
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:63: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestMerkleRoot::test_empty_merkle_root
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:78: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestMerkleRoot::test_single_vote_merkle
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:90: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestMerkleRoot::test_multiple_votes_merkle
+  /home/thorium/Desktop/programming/blockchain/tests/test_blockchain.py:107: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+
+tests/test_blockchain.py::TestBlockchain::test_genesis_block
+tests/test_blockchain.py::TestBlockchain::test_add_block
+tests/test_blockchain.py::TestBlockchain::test_chain_validation
+tests/test_blockchain.py::TestBlockchain::test_tamper_detection
+  /home/thorium/Desktop/programming/2026/blockchain/app/blockchain/chain.py:46: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+tests/test_blockchain.py::TestBlockchain::test_genesis_block
+tests/test_blockchain.py::TestBlockchain::test_add_block
+tests/test_blockchain.py::TestBlockchain::test_chain_validation
+tests/test_blockchain.py::TestBlockchain::test_tamper_detection
+  /home/thorium/Desktop/programming/2026/blockchain/app/blockchain/chain.py:202: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "timestamp": datetime.utcnow().isoformat()
+
+tests/test_blockchain.py::TestBlockchain::test_add_block
+tests/test_blockchain.py::TestBlockchain::test_chain_validation
+tests/test_blockchain.py::TestBlockchain::test_tamper_detection
+tests/test_blockchain.py::TestVoteTransaction::test_transaction_hash
+tests/test_blockchain.py::TestVoteTransaction::test_different_votes_different_hashes
+tests/test_blockchain.py::TestVoteTransaction::test_different_votes_different_hashes
+  /home/thorium/Desktop/programming/2026/blockchain/app/blockchain/block.py:260: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.timestamp = timestamp or datetime.utcnow()
+
+tests/test_blockchain.py::TestBlockchain::test_add_block
+tests/test_blockchain.py::TestBlockchain::test_chain_validation
+tests/test_blockchain.py::TestBlockchain::test_tamper_detection
+  /home/thorium/Desktop/programming/2026/blockchain/app/blockchain/chain.py:90: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    timestamp=datetime.utcnow(),
+
+tests/test_security.py::TestSlidingWindowRateLimiter::test_allow_first_requests
+tests/test_security.py::TestSlidingWindowRateLimiter::test_block_excess_requests
+tests/test_security.py::TestSlidingWindowRateLimiter::test_block_excess_requests
+tests/test_security.py::TestSlidingWindowRateLimiter::test_block_excess_requests
+tests/test_security.py::TestSlidingWindowRateLimiter::test_different_keys_independent
+tests/test_security.py::TestSlidingWindowRateLimiter::test_different_keys_independent
+tests/test_security.py::TestSlidingWindowRateLimiter::test_different_keys_independent
+  /home/thorium/Desktop/programming/2026/blockchain/app/security/rate_limiter.py:47: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+tests/test_security.py::TestTokenBucket::test_initial_tokens
+tests/test_security.py::TestTokenBucket::test_refill_tokens
+tests/test_security.py::TestTokenBucket::test_refill_tokens
+  /home/thorium/Desktop/programming/2026/blockchain/app/security/rate_limiter.py:107: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    now = datetime.utcnow()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_blockchain.py::TestBlockHash::test_deterministic_hash - Ass...
+FAILED tests/test_blockchain.py::TestBlockHash::test_canonical_serialization
+FAILED tests/test_blockchain.py::TestMerkleRoot::test_single_vote_merkle - As...
+FAILED tests/test_security.py::TestTokenBucket::test_no_overflow - assert 100...
+FAILED tests/test_security.py::TestAntiReplay::test_future_timestamp_rejected
+================== 5 failed, 22 passed, 40 warnings in 6.45s ===================

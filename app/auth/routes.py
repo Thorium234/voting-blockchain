@@ -79,7 +79,6 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
         voter_id=user_data.voter_id,
         password_hash=hash_password(user_data.password),
         device_fingerprint=user_data.device_fingerprint,
-        is_admin=False,
         is_active=True
     )
     db.add(user)
