@@ -159,12 +159,14 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex space-x-4 mb-8">
-          {['overview', 'users', 'security', 'register'].map((tab) => (
+          {['overview', 'users', 'security', 'pending', 'register'].map((tab) => (
             <button
               key={tab}
               onClick={() => {
                 if (tab === 'register') {
                   router.push('/admin/register');
+                } else if (tab === 'pending') {
+                  router.push('/admin/pending-aspirants');
                 } else {
                   setActiveTab(tab);
                 }
@@ -175,7 +177,7 @@ export default function AdminPage() {
                   : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'pending' ? 'Pending Aspirants' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>

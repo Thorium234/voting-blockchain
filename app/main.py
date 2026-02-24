@@ -10,6 +10,9 @@ from app.database import init_db
 from app.auth import routes as auth_routes
 from app.voting import routes as voting_routes
 from app.admin import routes as admin_routes
+from app.admin import superadmin_routes
+from app.admin import command_center
+from app.aspirant import routes as aspirant_routes
 from app.config import get_settings
 
 settings = get_settings()
@@ -137,6 +140,9 @@ def startup_event():
 app.include_router(auth_routes.router, prefix="/api/v1")
 app.include_router(voting_routes.router, prefix="/api/v1")
 app.include_router(admin_routes.router, prefix="/api/v1")
+app.include_router(superadmin_routes.router, prefix="/api/v1")
+app.include_router(command_center.router, prefix="/api/v1")
+app.include_router(aspirant_routes.router, prefix="/api/v1")
 
 
 @app.get("/")

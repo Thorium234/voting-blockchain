@@ -99,6 +99,7 @@ export default function ResultsPage() {
             
             <nav className="flex items-center space-x-4">
               <Link href="/" className="text-slate-300 hover:text-emerald-400 transition">Home</Link>
+              <Link href="/aspirant/register" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition">Register as Aspirant</Link>
               <Link href="/login" className="text-slate-300 hover:text-emerald-400 transition">Login</Link>
             </nav>
           </div>
