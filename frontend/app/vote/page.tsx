@@ -33,8 +33,10 @@ export default function VotePage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
+    } else if (!isLoading && isAuthenticated && user?.role !== 'voter') {
+      router.push('/admin');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, user, router]);
 
   useEffect(() => {
     const checkVoted = async () => {
@@ -99,7 +101,20 @@ export default function VotePage() {
     );
   }
 
-  if (!user) return null;
+  if (!user || user.role !== 'voter') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="bg-red-500/10 border border-red-500/50 rounded-2xl p-8 text-center max-w-md">
+          <div className="text-6xl mb-4">⛔</div>
+          <h2 className="text-2xl font-bold text-red-400 mb-2">Access Denied</h2>
+          <p className="text-slate-400 mb-6">Only voters can access the voting page. Admins and superadmins cannot vote.</p>
+          <Link href="/admin" className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition">
+            Go to Admin Panel
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">

@@ -139,11 +139,21 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-3 gap-6">
-          <Link href="/vote" className="bg-slate-800/50 border border-slate-700 hover:border-emerald-500 rounded-2xl p-6 transition group">
-            <div className="text-4xl mb-4 group-hover:scale-110 transition">🗳️</div>
-            <h3 className="text-lg font-semibold text-white mb-2">Cast Vote</h3>
-            <p className="text-slate-400">Submit your vote for your preferred candidate</p>
-          </Link>
+          {user?.role === 'voter' && !hasVoted && (
+            <Link href="/vote" className="bg-slate-800/50 border border-slate-700 hover:border-emerald-500 rounded-2xl p-6 transition group">
+              <div className="text-4xl mb-4 group-hover:scale-110 transition">🗳️</div>
+              <h3 className="text-lg font-semibold text-white mb-2">Cast Vote</h3>
+              <p className="text-slate-400">Submit your vote for your preferred candidate</p>
+            </Link>
+          )}
+          
+          {user?.role !== 'voter' && (
+            <Link href="/admin" className="bg-slate-800/50 border border-slate-700 hover:border-purple-500 rounded-2xl p-6 transition group">
+              <div className="text-4xl mb-4 group-hover:scale-110 transition">⚙️</div>
+              <h3 className="text-lg font-semibold text-white mb-2">Admin Panel</h3>
+              <p className="text-slate-400">Manage voters, aspirants, and elections</p>
+            </Link>
+          )}
           
           <Link href="/results" className="bg-slate-800/50 border border-slate-700 hover:border-emerald-500 rounded-2xl p-6 transition group">
             <div className="text-4xl mb-4 group-hover:scale-110 transition">📊</div>

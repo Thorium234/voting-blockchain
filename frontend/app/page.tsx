@@ -82,12 +82,21 @@ export default function Home() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {isAuthenticated ? (
-              <Link 
-                href="/vote" 
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg shadow-emerald-500/25"
-              >
-                Cast Your Vote →
-              </Link>
+              user?.role === 'voter' ? (
+                <Link 
+                  href="/vote" 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg shadow-emerald-500/25"
+                >
+                  Cast Your Vote →
+                </Link>
+              ) : (
+                <Link 
+                  href="/admin" 
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-lg px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg shadow-purple-500/25"
+                >
+                  Admin Dashboard →
+                </Link>
+              )
             ) : (
               <>
                 <Link 

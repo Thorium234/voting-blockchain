@@ -63,8 +63,8 @@ class User(Base):
     
     @property
     def can_vote(self) -> bool:
-        """Check if user can vote (voters only)."""
-        return self.role == 'voter' and self.is_active
+        """Check if user can vote (voters only, admins cannot vote)."""
+        return self.role == 'voter' and self.is_active and not self.has_voted
     
     @property
     def can_manage_users(self) -> bool:

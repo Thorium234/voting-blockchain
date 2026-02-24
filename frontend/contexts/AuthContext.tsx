@@ -51,17 +51,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = async (accessToken: string) => {
     try {
       const response = await axios.get(API_ENDPOINTS.ME, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` },
+        timeout: 5000
       });
       setUser(response.data);
     } catch (error) {
-      // Token expired, try to refresh
-      const storedRefreshToken = localStorage.getItem('refresh_token');
-      if (storedRefreshToken) {
-        await refreshAccessToken();
-      } else {
-        logout();
-      }
+      console.error('Failed to fetch user:', error);
+      logout();
     } finally {
       setIsLoading(false);
     }

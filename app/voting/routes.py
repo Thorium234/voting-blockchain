@@ -46,12 +46,27 @@ def cast_vote(
     Cast a vote with full anti-replay protection.
     
     Security measures:
+    - Only voters can vote (admins and superadmins cannot vote)
     - Nonce validation (prevent replay)
     - Timestamp validation (reject old votes)
     - Vote payload hashing before storage
     - Double voting prevention (database + blockchain)
     """
     client_ip = get_client_ip(request)
+    
+    # Check if user is a voter (admins and superadmins cannot vote)
+    if current_user.role != 'voter':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only voters can cast votes. Admins and superadmins cannot vote."
+        )
+    
+    # Check if user account is active
+    if not current_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account is not active"
+        )
     
     # Check if user has already voted (database check)
     if current_user.has_voted:
