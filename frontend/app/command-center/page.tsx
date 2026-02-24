@@ -31,6 +31,71 @@ ChartJS.register(
   Legend
 );
 
+function BannedIPsList({ token }: { token: string | null }) {
+  const [bannedIPs, setBannedIPs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchBannedIPs();
+  }, [token]);
+
+  const fetchBannedIPs = async () => {
+    if (!token) return;
+    try {
+      const response = await axios.get('http://localhost:8000/api/v1/command-center/security/banned-ips', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setBannedIPs(response.data.banned_ips);
+    } catch (error) {
+      console.error('Error fetching banned IPs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const unbanIP = async (ip: string) => {
+    if (!token || !confirm(`Unban ${ip}?`)) return;
+    try {
+      await axios.post(`http://localhost:8000/api/v1/command-center/security/unban-ip/${ip}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert('IP unbanned successfully');
+      fetchBannedIPs();
+    } catch (error) {
+      alert('Failed to unban IP');
+    }
+  };
+
+  if (loading) return <div className="text-slate-400">Loading...</div>;
+  if (bannedIPs.length === 0) return <div className="text-slate-400">No banned IPs</div>;
+
+  return (
+    <div className="space-y-2">
+      {bannedIPs.map((ban, idx) => (
+        <div key={idx} className="bg-slate-900/50 border border-slate-600 rounded-lg p-3 flex justify-between items-center">
+          <div>
+            <div className="text-white font-mono">{ban.ip_address}</div>
+            <div className="text-slate-400 text-sm">
+              {ban.is_active ? (
+                <span className="text-red-400">Active until {new Date(ban.banned_until).toLocaleString()}</span>
+              ) : (
+                <span className="text-slate-500">Expired</span>
+              )}
+            </div>
+            <div className="text-slate-500 text-xs">Reason: {ban.reason || 'N/A'} | Attempts: {ban.failed_attempts}</div>
+          </div>
+          <button
+            onClick={() => unbanIP(ban.ip_address)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded text-sm transition"
+          >
+            Unban
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CommandCenterPage() {
   const { user, isAuthenticated, isLoading, token } = useAuth();
   const router = useRouter();
@@ -230,7 +295,7 @@ export default function CommandCenterPage() {
 
         {/* Admin Surveillance */}
         {surveillance && (
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 mb-8">
             <h3 className="text-lg font-semibold text-white mb-4">Admin Surveillance (24h)</h3>
             <div className="space-y-3">
               {surveillance.admins?.map((admin: any, idx: number) => (
@@ -265,3 +330,29 @@ export default function CommandCenterPage() {
     </div>
   );
 }
+
+
+        {/* IP Management */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">Banned IPs Management</h3>
+            <button
+              onClick={async () => {
+                if (!token || !confirm('Unban ALL IPs?')) return;
+                try {
+                  await axios.post('http://localhost:8000/api/v1/command-center/security/unban-all-ips', {}, {
+                    headers: { Authorization: `Bearer ${token}` }
+                  });
+                  alert('All IPs unbanned');
+                  fetchData();
+                } catch (error) {
+                  alert('Failed to unban IPs');
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition text-sm"
+            >
+              Unban All IPs
+            </button>
+          </div>
+          <BannedIPsList token={token} />
+        </div>

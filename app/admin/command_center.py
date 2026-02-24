@@ -620,3 +620,94 @@ def generate_summary_report(
         report["seats"].append(seat_report)
     
     return report
+
+
+
+# ==================== IP MANAGEMENT ====================
+
+@router.get("/security/banned-ips")
+def get_all_banned_ips(
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """Get all banned IPs including expired ones."""
+    from app.models import IPBlacklist
+    
+    bans = db.query(IPBlacklist).order_by(desc(IPBlacklist.created_at)).all()
+    
+    return {
+        "banned_ips": [
+            {
+                "ip_address": ban.ip_address,
+                "banned_until": ban.banned_until.isoformat(),
+                "reason": ban.reason,
+                "failed_attempts": ban.failed_attempts,
+                "ban_type": ban.ban_type,
+                "is_active": ban.banned_until > datetime.utcnow(),
+                "created_at": ban.created_at.isoformat()
+            }
+            for ban in bans
+        ]
+    }
+
+
+@router.post("/security/unban-ip/{ip_address}")
+def superadmin_unban_ip(
+    ip_address: str,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """Superadmin can unban any IP address."""
+    from app.models import IPBlacklist
+    
+    ban = db.query(IPBlacklist).filter(IPBlacklist.ip_address == ip_address).first()
+    
+    if not ban:
+        raise HTTPException(status_code=404, detail="IP not found in ban list")
+    
+    # Delete the ban record
+    db.delete(ban)
+    
+    create_audit_log(
+        db=db,
+        user_id=current_user.id,
+        action="unban_ip",
+        details=f"Superadmin unbanned IP: {ip_address}. Reason: {ban.reason}",
+        ip_address="system"
+    )
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"IP {ip_address} has been unbanned",
+        "ip": ip_address
+    }
+
+
+@router.post("/security/unban-all-ips")
+def unban_all_ips(
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """Superadmin can unban all IPs at once."""
+    from app.models import IPBlacklist
+    
+    count = db.query(IPBlacklist).count()
+    db.query(IPBlacklist).delete()
+    
+    create_audit_log(
+        db=db,
+        user_id=current_user.id,
+        action="unban_all_ips",
+        details=f"Superadmin unbanned all {count} IPs",
+        ip_address="system"
+    )
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"All {count} banned IPs have been cleared",
+        "count": count
+    }
