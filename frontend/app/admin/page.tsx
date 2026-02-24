@@ -159,10 +159,16 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex space-x-4 mb-8">
-          {['overview', 'users', 'security'].map((tab) => (
+          {['overview', 'users', 'security', 'register'].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                if (tab === 'register') {
+                  router.push('/admin/register');
+                } else {
+                  setActiveTab(tab);
+                }
+              }}
               className={`px-4 py-2 rounded-lg transition ${
                 activeTab === tab 
                   ? 'bg-purple-600 text-white' 

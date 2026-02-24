@@ -61,9 +61,6 @@ export default function Home() {
               ) : (
                 <>
                   <Link href="/login" className="text-slate-300 hover:text-emerald-400 transition-colors">Login</Link>
-                  <Link href="/register" className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition-colors">
-                    Register
-                  </Link>
                 </>
               )}
             </nav>
@@ -94,10 +91,10 @@ export default function Home() {
             ) : (
               <>
                 <Link 
-                  href="/register" 
+                  href="/login" 
                   className="bg-emerald-600 hover:bg-emerald-700 text-white text-lg px-8 py-4 rounded-xl transition-all hover:scale-105 shadow-lg shadow-emerald-500/25"
                 >
-                  Get Started
+                  🔐 Login to Vote
                 </Link>
                 <Link 
                   href="/results" 
@@ -108,6 +105,12 @@ export default function Home() {
               </>
             )}
           </div>
+          
+          {!isAuthenticated && (
+            <p className="text-slate-400 text-sm mt-6">
+              ℹ️ Contact your administrator to register as a voter
+            </p>
+          )}
         </div>
 
         {/* Features Grid */}
@@ -160,10 +163,10 @@ export default function Home() {
           <h2 className="text-3xl font-bold text-white text-center mb-12">How It Works</h2>
           <div className="grid md:grid-cols-4 gap-6">
             {[
-              { step: '1', title: 'Register', desc: 'Create your secure voter account' },
-              { step: '2', title: 'Login', desc: 'Authenticate with your device' },
+              { step: '1', title: 'Get Registered', desc: 'Admin registers your account' },
+              { step: '2', title: 'Login', desc: 'Authenticate with credentials' },
               { step: '3', title: 'Vote', desc: 'Cast your vote securely' },
-              { step: '4', title: 'Verify', desc: 'Watch your vote on blockchain' }
+              { step: '4', title: 'Verify', desc: 'View vote on blockchain' }
             ].map((item, index) => (
               <div key={index} className="text-center">
                 <div className="w-12 h-12 bg-emerald-600 rounded-full flex items-center justify-center text-xl font-bold text-white mx-auto mb-4">

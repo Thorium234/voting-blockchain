@@ -46,6 +46,9 @@ class User(Base):
         Index('idx_user_email_active', 'email', 'is_active'),
         Index('idx_user_voter_id', 'voter_id'),
         Index('idx_user_role', 'role'),
+        Index('idx_user_email', 'email'),
+        Index('idx_user_last_login', 'last_login_at'),
+        Index('idx_user_created', 'created_at'),
     )
     
     @property
@@ -104,6 +107,9 @@ class Session(Base):
     __table_args__ = (
         Index('idx_session_user_active', 'user_id', 'is_active'),
         Index('idx_session_expires', 'expires_at'),
+        Index('idx_session_id', 'session_id'),
+        Index('idx_session_user_expires', 'user_id', 'expires_at'),
+        Index('idx_session_active_expires', 'is_active', 'expires_at'),
     )
 
 
@@ -131,6 +137,17 @@ class Vote(Base):
     
     # Relationships
     voter = relationship("User", back_populates="votes")
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_vote_voter', 'voter_id'),
+        Index('idx_vote_candidate', 'candidate_id'),
+        Index('idx_vote_timestamp', 'timestamp'),
+        Index('idx_vote_block', 'block_index'),
+        Index('idx_vote_candidate_time', 'candidate_id', 'timestamp'),
+        Index('idx_vote_voter_time', 'voter_id', 'timestamp'),
+        Index('idx_vote_verified', 'is_verified'),
+    )
 
 
 class Block(Base):
@@ -153,6 +170,15 @@ class Block(Base):
     # Checkpoint
     is_checkpoint = Column(Boolean, default=False)
     checkpoint_hash = Column(String(64), nullable=True)
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_block_index', 'index'),
+        Index('idx_block_hash', 'hash'),
+        Index('idx_block_timestamp', 'timestamp'),
+        Index('idx_block_checkpoint', 'is_checkpoint'),
+        Index('idx_block_prev_hash', 'previous_hash'),
+    )
 
 
 class IPBlacklist(Base):
@@ -173,6 +199,14 @@ class IPBlacklist(Base):
     banned_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Indexes
+    __table_args__ = (
+        Index('idx_ip_address', 'ip_address'),
+        Index('idx_ip_banned_until', 'banned_until'),
+        Index('idx_ip_active_bans', 'ip_address', 'banned_until'),
+        Index('idx_ip_ban_type', 'ban_type'),
+    )
 
 
 class LoginAttempt(Base):
@@ -243,6 +277,9 @@ class VoteNonce(Base):
     # Indexes
     __table_args__ = (
         Index('idx_nonce_voter', 'voter_id', 'used_at'),
+        Index('idx_nonce_value', 'nonce'),
+        Index('idx_nonce_used_at', 'used_at'),
+        Index('idx_nonce_voter_nonce', 'voter_id', 'nonce'),
     )
 
 
@@ -260,6 +297,8 @@ class ChainCheckpoint(Base):
     # Index
     __table_args__ = (
         Index('idx_checkpoint_block', 'block_index'),
+        Index('idx_checkpoint_hash', 'checkpoint_hash'),
+        Index('idx_checkpoint_created', 'created_at'),
     )
 
 
@@ -278,4 +317,6 @@ class Candidate(Base):
     # Index
     __table_args__ = (
         Index('idx_candidate_active', 'candidate_id', 'is_active'),
+        Index('idx_candidate_id', 'candidate_id'),
+        Index('idx_candidate_is_active', 'is_active'),
     )

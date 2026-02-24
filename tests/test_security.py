@@ -8,6 +8,7 @@ Tests:
 - Credential stuffing detection
 """
 import pytest
+import time
 from datetime import datetime, timedelta
 from app.security.rate_limiter import SlidingWindowRateLimiter, TokenBucket
 

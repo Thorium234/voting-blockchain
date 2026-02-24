@@ -59,7 +59,11 @@ def list_users(
     db: Session = Depends(get_db)
 ):
     """List all users (admin only)."""
-    users = db.query(User).offset(skip).limit(limit).all()
+    from sqlalchemy.orm import joinedload
+    users = db.query(User).options(
+        joinedload(User.votes),
+        joinedload(User.sessions)
+    ).offset(skip).limit(limit).all()
     return users
 
 

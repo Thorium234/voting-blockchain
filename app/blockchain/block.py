@@ -40,13 +40,13 @@ class Block:
         self.validator = validator
         self.signature = signature
         
+        # Compute merkle root first (needed for hash calculation)
+        if self.merkle_root is None and self.votes:
+            self.merkle_root = self.calculate_merkle_root()
+        
         # Compute hash if not provided
         if self.hash is None:
             self.hash = self.calculate_hash()
-        
-        # Compute merkle root if not provided and we have votes
-        if self.merkle_root is None and self.votes:
-            self.merkle_root = self.calculate_merkle_root()
     
     def calculate_hash(self) -> str:
         """

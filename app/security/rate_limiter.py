@@ -102,6 +102,15 @@ class TokenBucket:
         self._last_refill = datetime.utcnow()
         self._lock = threading.Lock()
     
+    @property
+    def _tokens(self):
+        return self.__tokens
+    
+    @_tokens.setter
+    def _tokens(self, value):
+        """Ensure tokens never exceed capacity."""
+        self.__tokens = min(value, self.capacity) if value is not None else self.capacity
+    
     def consume(self, tokens: int = 1) -> bool:
         """Try to consume tokens."""
         now = datetime.utcnow()
@@ -279,7 +288,7 @@ def record_failed_attempt(
 
 def check_and_ban_ip(db: Session, ip_address: str) -> None:
     """
-    Progressive penalty system for IP banning.
+    Progressive penalty system for IP banning (optimized).
     
     Penalty levels:
     - Soft throttle: >5 failed attempts in window
@@ -287,15 +296,18 @@ def check_and_ban_ip(db: Session, ip_address: str) -> None:
     - Extended ban: >20 failed attempts (2 hours)
     - Long ban: >50 failed attempts (24 hours)
     """
-    # Count failed attempts in window
+    from sqlalchemy import func
+    
+    # Count failed attempts in window (optimized with index)
     cutoff = datetime.utcnow() - timedelta(
         hours=settings.FAILED_ATTEMPTS_WINDOW_HOURS
     )
-    failed_count = db.query(LoginAttempt).filter(
+    
+    failed_count = db.query(func.count(LoginAttempt.id)).filter(
         LoginAttempt.ip_address == ip_address,
         LoginAttempt.success == False,
         LoginAttempt.timestamp >= cutoff
-    ).count()
+    ).scalar() or 0
     
     # Determine ban duration based on failure count
     if failed_count >= 50:

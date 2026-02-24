@@ -7,11 +7,12 @@ import re
 
 # Auth Schemas
 class UserCreate(BaseModel):
-    """Schema for user registration with validation."""
+    """Schema for user registration (admin only)."""
     email: EmailStr
     voter_id: str = Field(..., min_length=3, max_length=50, pattern=r'^[a-zA-Z0-9_-]+$')
     password: str = Field(..., min_length=8, max_length=100)
     device_fingerprint: Optional[str] = None
+    role: Optional[str] = Field(default='voter', pattern=r'^(voter|admin|superadmin)$')
     
     @field_validator('password')
     @classmethod
@@ -24,6 +25,14 @@ class UserCreate(BaseModel):
         if not re.search(r'[0-9]', v):
             raise ValueError('Password must contain at least one digit')
         return v
+    
+    @field_validator('role')
+    @classmethod
+    def validate_role(cls, v: Optional[str]) -> str:
+        """Validate role."""
+        if v and v not in ['voter', 'admin', 'superadmin']:
+            raise ValueError('Role must be voter, admin, or superadmin')
+        return v or 'voter'
 
 
 class UserLogin(BaseModel):

@@ -7,17 +7,23 @@ Features:
 - Chain checkpointing
 - Enhanced validation
 - Deterministic operations
+- Validation caching
 """
 import json
 import hashlib
+import time
 from datetime import datetime
 from typing import List, Optional, Dict, Tuple
 from sqlalchemy.orm import Session
+from functools import lru_cache
 
 from app.blockchain.block import Block, VoteTransaction
 from app.config import get_settings
 
 settings = get_settings()
+
+# Validation cache
+_validation_cache = {"timestamp": 0, "result": (True, [])}
 
 
 class Blockchain:
@@ -117,9 +123,9 @@ class Blockchain:
             block.nonce += 1
             block.hash = block.calculate_hash()
     
-    def is_chain_valid(self) -> Tuple[bool, List[int]]:
+    def is_chain_valid(self, use_cache: bool = True) -> Tuple[bool, List[int]]:
         """
-        Validate the entire blockchain.
+        Validate the entire blockchain with caching.
         
         Checks:
         - Hash consistency
@@ -127,6 +133,14 @@ class Blockchain:
         - Merkle root integrity
         - PoW validity
         """
+        global _validation_cache
+        
+        # Use cache if enabled and recent (60 seconds)
+        if use_cache:
+            cache_age = time.time() - _validation_cache["timestamp"]
+            if cache_age < 60:
+                return _validation_cache["result"]
+        
         invalid_blocks = []
         
         for i in range(1, len(self.chain)):
@@ -155,7 +169,13 @@ class Blockchain:
                 invalid_blocks.append(i)
                 continue
         
-        return len(invalid_blocks) == 0, invalid_blocks
+        result = (len(invalid_blocks) == 0, invalid_blocks)
+        
+        # Update cache
+        _validation_cache["timestamp"] = time.time()
+        _validation_cache["result"] = result
+        
+        return result
     
     def verify_chain_from_checkpoint(self, checkpoint_index: int) -> Tuple[bool, List[int]]:
         """

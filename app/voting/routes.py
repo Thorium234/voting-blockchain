@@ -193,14 +193,22 @@ def cast_vote(
 @router.get("/results", response_model=VotingResults)
 def get_results(db: Session = Depends(get_db)):
     """Get voting results with chain verification."""
+    from sqlalchemy import func
+    
     blockchain = get_blockchain()
     
-    # Validate chain first
-    is_valid, invalid_blocks = blockchain.is_chain_valid()
+    # Validate chain (with cache)
+    is_valid, invalid_blocks = blockchain.is_chain_valid(use_cache=True)
     
-    # Get vote counts from blockchain
-    vote_counts = blockchain.get_vote_count()
-    total_votes = blockchain.get_total_votes()
+    # Use database aggregation for vote counts (much faster)
+    vote_counts_query = db.query(
+        Vote.candidate_id,
+        func.count(Vote.id).label('count')
+    ).filter(
+        Vote.is_verified == True
+    ).group_by(Vote.candidate_id).all()
+    
+    total_votes = db.query(func.count(Vote.id)).filter(Vote.is_verified == True).scalar() or 0
     
     # Convert to response format
     results = [
@@ -209,7 +217,7 @@ def get_results(db: Session = Depends(get_db)):
             vote_count=count,
             percentage=round((count / total_votes * 100) if total_votes > 0 else 0, 2)
         )
-        for candidate_id, count in vote_counts.items()
+        for candidate_id, count in vote_counts_query
     ]
     
     # Sort by vote count descending

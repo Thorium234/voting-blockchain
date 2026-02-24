@@ -21,21 +21,16 @@ settings = get_settings()
 
 
 def is_ip_banned(db: Session, ip_address: str) -> bool:
-    """Check if an IP is currently banned."""
+    """Check if an IP is currently banned (optimized query)."""
+    now = datetime.utcnow()
+    
+    # Single optimized query with index usage
     ban = db.query(IPBlacklist).filter(
-        IPBlacklist.ip_address == ip_address
+        IPBlacklist.ip_address == ip_address,
+        IPBlacklist.banned_until > now
     ).first()
     
-    if not ban:
-        return False
-    
-    # Check if ban has expired
-    if ban.banned_until < datetime.utcnow():
-        db.delete(ban)
-        db.commit()
-        return False
-    
-    return True
+    return ban is not None
 
 
 def is_subnet_banned(db: Session, ip_address: str) -> bool:

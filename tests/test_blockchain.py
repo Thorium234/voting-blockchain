@@ -21,7 +21,7 @@ class TestBlockHash:
         """Hash should be deterministic across multiple calculations."""
         block = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=[{"voter_id": "v1", "candidate_id": "A"}],
             previous_hash="0" * 64
         )
@@ -35,14 +35,14 @@ class TestBlockHash:
         """Hash should change when block data changes."""
         block1 = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=[{"voter_id": "v1", "candidate_id": "A"}],
             previous_hash="0" * 64
         )
         
         block2 = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=[{"voter_id": "v1", "candidate_id": "B"}],
             previous_hash="0" * 64
         )
@@ -53,14 +53,14 @@ class TestBlockHash:
         """Different dict order should produce same hash."""
         block1 = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=[{"voter_id": "v1", "candidate_id": "A"}],
             previous_hash="0" * 64
         )
         
         block2 = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=[{"candidate_id": "A", "voter_id": "v1"}],
             previous_hash="0" * 64
         )
@@ -75,7 +75,7 @@ class TestMerkleRoot:
         """Block with no votes should have None merkle root."""
         block = Block(
             index=0,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=[],
             previous_hash="0" * 64
         )
@@ -87,13 +87,13 @@ class TestMerkleRoot:
         votes = [{"voter_id": "v1", "candidate_id": "A"}]
         block = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=votes,
             previous_hash="0" * 64
         )
         
         import hashlib
-        expected = hashlib.sha256(json.dumps(votes[0], sort_keys=True).encode()).hexdigest()
+        expected = hashlib.sha256(json.dumps(votes[0], sort_keys=True, separators=(',', ':')).encode()).hexdigest()
         assert block.merkle_root == expected
     
     def test_multiple_votes_merkle(self):
@@ -104,7 +104,7 @@ class TestMerkleRoot:
         ]
         block = Block(
             index=1,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime(2024, 1, 1, 0, 0, 0),
             votes=votes,
             previous_hash="0" * 64
         )

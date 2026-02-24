@@ -25,8 +25,13 @@ settings = get_settings()
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
-    """Register a new voter with rate limiting."""
+def register(
+    user_data: UserCreate, 
+    request: Request, 
+    current_admin: User = Depends(get_current_admin),
+    db: Session = Depends(get_db)
+):
+    """Register a new user (ADMIN ONLY - voters, candidates, or other admins)."""
     client_ip = get_client_ip(request)
     
     # Check if IP is banned
@@ -73,24 +78,34 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
             detail="Registration failed. Please try again."
         )
     
-    # Create user
+    # Validate role assignment (only superadmin can create admins)
+    if user_data.role in ['admin', 'superadmin']:
+        if not current_admin.is_superadmin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only superadmin can create admin accounts"
+            )
+    
+    # Create user with specified role
     user = User(
         email=user_data.email,
         voter_id=user_data.voter_id,
         password_hash=hash_password(user_data.password),
         device_fingerprint=user_data.device_fingerprint,
-        is_active=True
+        role=user_data.role or 'voter',
+        is_active=True,
+        is_verified=True  # Admin-registered users are pre-verified
     )
     db.add(user)
     db.commit()
     db.refresh(user)
     
-    # Log successful registration
+    # Log successful registration by admin
     create_audit_log(
         db=db,
-        user_id=user.id,
-        action="register_success",
-        details=f"User registered with voter_id: {user_data.voter_id}",
+        user_id=current_admin.id,
+        action="admin_register_user",
+        details=f"Admin {current_admin.email} registered {user_data.role}: {user_data.voter_id}",
         ip_address=client_ip
     )
     

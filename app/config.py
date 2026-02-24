@@ -44,8 +44,8 @@ class Settings:
     
     # Security - Zero Trust
     BIND_TOKEN_TO_IP: bool = True           # Bind JWT to original IP
-    BIND_TOKEN_TO_DEVICE: bool = True       # Bind JWT to device fingerprint
-    REQUIRE_DEVICE_FINGERPRINT: bool = True # Require device FP for auth
+    BIND_TOKEN_TO_DEVICE: bool = False       # Bind JWT to device fingerprint
+    REQUIRE_DEVICE_FINGERPRINT: bool = False # Require device FP for auth
     
     # Security - API Protection
     MAX_REQUEST_SIZE_KB: int = 100          # Max request body size
