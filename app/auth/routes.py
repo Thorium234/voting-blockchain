@@ -14,7 +14,7 @@ from app.auth.jwt_handler import (
     verify_token_type,
     verify_token_bindings
 )
-from app.auth.dependencies import get_current_user, get_client_ip, get_device_fingerprint
+from app.auth.dependencies import get_current_user, get_current_admin, get_client_ip, get_device_fingerprint
 from app.config import get_settings
 from app.security.rate_limiter import check_rate_limit, get_rate_limit_status
 from app.security.ip_ban import is_ip_banned, detect_credential_stuffing
