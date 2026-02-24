@@ -26,6 +26,7 @@ class User(Base):
     full_name = Column(String(255), nullable=True)
     phone = Column(String(20), nullable=True)
     address = Column(Text, nullable=True)
+    location = Column(String(100), nullable=True)  # County/State/Region
     custom_fields = Column(JSON, nullable=True)
     
     # Security fields

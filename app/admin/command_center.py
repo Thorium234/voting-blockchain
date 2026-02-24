@@ -183,6 +183,7 @@ def get_ballot_preview(
 def mint_voter_identity(
     email: str,
     full_name: str,
+    location: str,
     id_number: str = None,
     reg_number: str = None,
     phone: str = None,
@@ -218,6 +219,7 @@ def mint_voter_identity(
         id_number=id_number,
         reg_number=reg_number,
         phone=phone,
+        location=location,
         public_key=blockchain_address,
         is_active=True,
         created_by=current_user.id
@@ -445,3 +447,176 @@ def emergency_lock_admin(
         "message": f"Admin {admin.email} locked immediately",
         "reason": reason
     }
+
+
+
+# ==================== LOCATION-BASED ANALYTICS ====================
+
+@router.get("/analytics/location-breakdown")
+def get_location_breakdown(
+    seat_id: str = None,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """Get vote breakdown by location for each seat."""
+    from sqlalchemy import and_
+    
+    query = db.query(
+        Vote.seat_id,
+        Vote.candidate_id,
+        User.location,
+        func.count(Vote.id).label('vote_count')
+    ).join(User, Vote.voter_id == User.id)
+    
+    if seat_id:
+        query = query.filter(Vote.seat_id == seat_id)
+    
+    results = query.group_by(Vote.seat_id, Vote.candidate_id, User.location).all()
+    
+    # Organize by seat -> candidate -> location
+    breakdown = {}
+    for r in results:
+        seat_key = r.seat_id or 'general'
+        if seat_key not in breakdown:
+            breakdown[seat_key] = {}
+        if r.candidate_id not in breakdown[seat_key]:
+            breakdown[seat_key][r.candidate_id] = {}
+        breakdown[seat_key][r.candidate_id][r.location or 'Unknown'] = r.vote_count
+    
+    return {"location_breakdown": breakdown}
+
+
+@router.get("/analytics/comprehensive")
+def get_comprehensive_analytics(
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """Complete analytics dashboard data."""
+    from datetime import timedelta
+    
+    # Voter turnout by location
+    location_turnout = db.query(
+        User.location,
+        func.count(User.id).label('total_voters'),
+        func.sum(func.cast(User.has_voted, Integer)).label('voted_count')
+    ).filter(User.role == 'voter').group_by(User.location).all()
+    
+    # Hourly voting trends
+    now = datetime.utcnow()
+    last_24h = now - timedelta(hours=24)
+    hourly_votes = db.query(
+        func.strftime('%H', Vote.timestamp).label('hour'),
+        func.count(Vote.id).label('count')
+    ).filter(Vote.timestamp >= last_24h).group_by('hour').all()
+    
+    # Seat-wise results
+    seat_results = db.query(
+        ElectionSeat.seat_name,
+        Vote.candidate_id,
+        Candidate.name,
+        func.count(Vote.id).label('votes')
+    ).join(Vote, Vote.seat_id == ElectionSeat.id
+    ).join(Candidate, Candidate.candidate_id == Vote.candidate_id
+    ).group_by(ElectionSeat.seat_name, Vote.candidate_id, Candidate.name).all()
+    
+    return {
+        "location_turnout": [
+            {
+                "location": lt.location or "Unknown",
+                "total_voters": lt.total_voters,
+                "voted": lt.voted_count or 0,
+                "percentage": round((lt.voted_count or 0) / lt.total_voters * 100, 2) if lt.total_voters > 0 else 0
+            }
+            for lt in location_turnout
+        ],
+        "hourly_trends": [
+            {"hour": h.hour, "votes": h.count}
+            for h in hourly_votes
+        ],
+        "seat_results": [
+            {
+                "seat": sr.seat_name,
+                "candidate_id": sr.candidate_id,
+                "candidate_name": sr.name,
+                "votes": sr.votes
+            }
+            for sr in seat_results
+        ]
+    }
+
+
+@router.get("/reports/summary")
+def generate_summary_report(
+    election_id: str,
+    current_user: User = Depends(require_superadmin),
+    db: Session = Depends(get_db)
+):
+    """Generate comprehensive election summary report."""
+    election = db.query(Election).filter(Election.election_id == election_id).first()
+    if not election:
+        raise HTTPException(status_code=404, detail="Election not found")
+    
+    # Get all seats
+    seats = db.query(ElectionSeat).filter(ElectionSeat.election_id == election.id).all()
+    
+    report = {
+        "election_id": election_id,
+        "title": election.title,
+        "status": election.status,
+        "generated_at": datetime.utcnow().isoformat(),
+        "seats": []
+    }
+    
+    for seat in seats:
+        # Get results for this seat
+        results = db.query(
+            Candidate.candidate_id,
+            Candidate.name,
+            Candidate.party,
+            func.count(Vote.id).label('total_votes')
+        ).join(
+            SeatAspirant, SeatAspirant.candidate_id == Candidate.id
+        ).outerjoin(
+            Vote, and_(Vote.candidate_id == Candidate.candidate_id, Vote.seat_id == seat.id)
+        ).filter(
+            SeatAspirant.seat_id == seat.id
+        ).group_by(Candidate.candidate_id, Candidate.name, Candidate.party).all()
+        
+        # Location breakdown for this seat
+        location_breakdown = db.query(
+            User.location,
+            Vote.candidate_id,
+            func.count(Vote.id).label('votes')
+        ).join(
+            Vote, Vote.voter_id == User.id
+        ).filter(
+            Vote.seat_id == seat.id
+        ).group_by(User.location, Vote.candidate_id).all()
+        
+        # Organize location data
+        location_data = {}
+        for lb in location_breakdown:
+            loc = lb.location or "Unknown"
+            if loc not in location_data:
+                location_data[loc] = {}
+            location_data[loc][lb.candidate_id] = lb.votes
+        
+        seat_report = {
+            "seat_name": seat.seat_name,
+            "total_votes": sum(r.total_votes for r in results),
+            "candidates": [
+                {
+                    "candidate_id": r.candidate_id,
+                    "name": r.name,
+                    "party": r.party,
+                    "votes": r.total_votes,
+                    "percentage": round(r.total_votes / sum(x.total_votes for x in results) * 100, 2) if sum(x.total_votes for x in results) > 0 else 0
+                }
+                for r in results
+            ],
+            "location_breakdown": location_data
+        }
+        
+        report["seats"].append(seat_report)
+    
+    return report
